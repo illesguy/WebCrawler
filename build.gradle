@@ -1,0 +1,43 @@
+group 'illesguy'
+version '1.0'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.scoverage:gradle-scoverage:2.1.0'
+    }
+}
+
+apply plugin: 'scala'
+apply plugin: 'idea'
+
+sourceCompatibility = 1.11
+libsDirName = 'lib'
+project.ext.scalaVersion = '2.13.1'
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        scala.srcDirs = ['src/main/scala']
+        resources.srcDirs = ['src/main/resources']
+    }
+    test {
+        scala.srcDirs = ['src/test/scala']
+        resources.srcDirs = ['src/test/resources']
+    }
+}
+
+dependencies {
+    compile group: 'org.scala-lang', name: 'scala-library', version: project.ext.scalaVersion
+    compile group: 'org.scala-lang', name: 'scala-reflect', version: project.ext.scalaVersion
+    compile group: 'org.scala-lang', name: 'scala-compiler', version: project.ext.scalaVersion
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'org.mockito', name: 'mockito-all', version: '1.8.4'
+    testCompile group: 'org.scalatest', name: 'scalatest_2.13', version: '3.0.8'
+}
