@@ -3,24 +3,29 @@ package com.illesguy.webcrawler.main
 import java.util.concurrent.Executors
 
 import com.illesguy.webcrawler.crawler.Crawler
-import com.illesguy.webcrawler.errorhandler.LoggingErrorHandler
+import com.illesguy.webcrawler.errorhandler.IgnoringErrorHandler
 import com.illesguy.webcrawler.parser.{JsoupDocumentRetriever, SubDomainUrlParser}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext}
 
 object Main extends App {
   val urlToCrawl = args.toSeq.headOption.getOrElse("https://monzo.com")
 
-  val parser = new SubDomainUrlParser(JsoupDocumentRetriever)
-  val errorHandler = LoggingErrorHandler
+  val errorHandler = IgnoringErrorHandler
+  val parser = new SubDomainUrlParser(JsoupDocumentRetriever, errorHandler)
   val retriesOnTimeout = 3
-  val threadCount = 5
+  val threadCount = 4
   val execCtx = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(threadCount))
 
-  val crawler = new Crawler(parser, errorHandler, retriesOnTimeout, execCtx)
+  val crawler = new Crawler(parser, retriesOnTimeout, execCtx)
 
-  val urls = crawler.crawlUrl(urlToCrawl)
+  val startTime = System.currentTimeMillis()
+  val urls = Await.result(crawler.crawlUrl(urlToCrawl), Duration.Inf)
+  val endTime = System.currentTimeMillis()
 
-  println(urls.size)
   urls.foreach(println)
+
+  val executionTime = endTime - startTime
+  println(s"Found ${urls.size} urls in $executionTime ms.")
 }

@@ -2,17 +2,21 @@ package com.illesguy.webcrawler.parser
 
 import java.net.SocketTimeoutException
 
+import com.illesguy.webcrawler.errorhandler.ErrorHandler
+
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 
-class SubDomainUrlParser(documentRetriever: JsoupDocumentRetriever) extends UrlParser {
+class SubDomainUrlParser(documentRetriever: JsoupDocumentRetriever, errorHandler: ErrorHandler) extends UrlParser {
 
   override def getUrls(url: String, retryCount: Int): Try[Seq[String]] = documentRetriever.getDocumentFromUrl(url).map { doc =>
     lazy val elements = doc.select("a[href]").asScala.toSeq
     lazy val urls = elements.map(e => getCanonicalUrl(e.attr("abs:href")))
     lazy val subDomainUrls = urls.filter(u => isSubDomain(url, u))
     subDomainUrls.distinct
+  }.recover {
+    case ex => errorHandler.handleError(ex, url)
   }.recoverWith {
     case _: SocketTimeoutException if retryCount != 0 => getUrls(url, retryCount - 1)
   }

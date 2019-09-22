@@ -29,8 +29,8 @@ class ErrorHandlerTest extends FlatSpec with Matchers with MockitoSugar {
     result should be (Failure(exception))
   }
 
-  "IgnoringErrorHandler" should "return a list with the url passed in regardless what exception is passed in to be handled" in {
+  "IgnoringErrorHandler" should "return an empty list regardless what exception is passed in to be handled" in {
     val result = IgnoringErrorHandler.handleError(new RuntimeException("Unexpected error occured!"), "url")
-    result should be (Seq("url"))
+    result should be (Seq())
   }
 }
