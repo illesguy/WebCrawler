@@ -1,5 +1,5 @@
 # WebCrawler
-WebCrawler built with Scala and Akka
+WebCrawler built with Scala
 
 To build run `gradle build` then run with `build/bin/WebCrawler [url_to_crawl]`
 
