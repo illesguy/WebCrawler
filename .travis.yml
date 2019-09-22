@@ -1,0 +1,10 @@
+language: scala
+
+script:
+  - gradle test
+
+jdk:
+  - openjdk11
+
+scala:
+  - 2.13.1

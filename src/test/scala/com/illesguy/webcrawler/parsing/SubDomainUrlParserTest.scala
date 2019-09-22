@@ -9,7 +9,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.mockito.MockitoSugar
 
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 @RunWith(classOf[JUnitRunner])
 class SubDomainUrlParserTest extends FlatSpec with Matchers with MockitoSugar {
@@ -21,18 +21,39 @@ class SubDomainUrlParserTest extends FlatSpec with Matchers with MockitoSugar {
     val htmlStream = getClass.getClassLoader.getResourceAsStream(htmlFileName)
     Success(Jsoup.parse(htmlStream, "UTF-8", url))
   })
+
+  val urlRetrievalError = new Exception("Couldn't retrieve urls.")
+  Mockito.when(mockDocumentRetriever.getDocumentFromUrl("error")).thenReturn(Failure(urlRetrievalError))
+
   val urlParser = new SubDomainUrlParser(mockDocumentRetriever)
 
 
   "SubDomainUrlParser" should "return only sub domain urls" in {
     val url = "https://mock_page.com/"
     val result = urlParser.getUrls(url)
-    result should be (Seq(f"${url}about", f"${url}more_info"))
+    result should be (Success(Seq(f"${url}about", f"${url}more_info")))
   }
 
   it should "not return itself among sub domain urls" in {
     val url = "https://self_referential.com"
     val result = urlParser.getUrls(url)
-    result should be (Seq(f"$url/about"))
+    result should be (Success(Seq(f"$url/about")))
+  }
+
+  it should "return duplicate urls only once" in {
+    val url = "https://duplicates.com"
+    val result = urlParser.getUrls(url)
+    result should be (Success(Seq(f"$url/about", f"$url/stuff")))
+  }
+
+  it should "ignore anchors in urls" in {
+    val url = "https://urls_with_anchors.com"
+    val result = urlParser.getUrls(url)
+    result should be (Success(Seq(f"$url/about", f"$url/stuff")))
+  }
+
+  it should "pass errors upwards the call stack" in {
+    val result = urlParser.getUrls("error")
+    result should be (Failure(urlRetrievalError))
   }
 }
