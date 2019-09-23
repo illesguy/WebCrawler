@@ -1,33 +1,29 @@
 package com.illesguy.webcrawler.parser
 
-import java.net.SocketTimeoutException
-
-import com.illesguy.webcrawler.errorhandler.ErrorHandler
+import org.jsoup.nodes.Document
 
 import scala.jdk.CollectionConverters._
-import scala.util.Try
 
 
-class SubDomainUrlParser(documentRetriever: JsoupDocumentRetriever, errorHandler: ErrorHandler) extends UrlParser {
+object SubDomainUrlParser extends UrlParser {
 
-  override def getUrls(url: String, retryCount: Int): Try[Seq[String]] = documentRetriever.getDocumentFromUrl(url).map { doc =>
-    lazy val elements = doc.select("a[href]").asScala.toSeq
+  private val specialCharacters = raw"[#\\?%]".r
+
+  override def getUrlsFromDocument(document: Document): Seq[String] = {
+    lazy val elements = document.select("a[href]").asScala.toSeq
     lazy val urls = elements.map(e => getCanonicalUrl(e.attr("abs:href")))
-    lazy val subDomainUrls = urls.filter(u => isSubDomain(url, u))
+    lazy val subDomainUrls = urls.filter(u => isSubDomain(document.baseUri, u))
     subDomainUrls.distinct
-  }.recover {
-    case ex => errorHandler.handleError(ex, url)
-  }.recoverWith {
-    case _: SocketTimeoutException if retryCount != 0 => getUrls(url, retryCount - 1)
   }
 
   private def getCanonicalUrl(url: String): String = {
-    if (url.contains("#"))
-      url.substring(0, url.indexOf('#'))
-    else if (url.endsWith("/"))
-      url.substring(0, url.length - 1)
-    else url
+    val urlWithoutSpecialChars = specialCharacters.findFirstIn(url).map(c => url.substring(0, url.indexOf(c))).getOrElse(url)
+
+    if (urlWithoutSpecialChars.endsWith("/"))
+      urlWithoutSpecialChars.substring(0, urlWithoutSpecialChars.length - 1)
+    else urlWithoutSpecialChars
   }
 
-  private def isSubDomain(root: String, url: String): Boolean = url.startsWith(root) && url != root
+  private def isSubDomain(baseUrl: String, url: String): Boolean = url.startsWith(baseUrl) && url != baseUrl
+
 }
