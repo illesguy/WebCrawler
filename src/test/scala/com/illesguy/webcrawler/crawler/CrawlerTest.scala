@@ -19,7 +19,7 @@ import scala.util.{Failure, Success, Try}
 class CrawlerTest extends FlatSpec with Matchers with MockitoSugar {
 
   val mockProcessor = mock[PageProcessor]
-  val urlRetrievalError = new HttpStatusException("Couldn't retrieve urls.", 404, "url")
+  val urlRetrievalError = new RuntimeException("Couldn't retrieve urls")
   val execCtx = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(1))
 
 
@@ -28,13 +28,13 @@ class CrawlerTest extends FlatSpec with Matchers with MockitoSugar {
   def resetMocks(): Unit = {
     Mockito.reset(mockProcessor)
 
-    Mockito.when(mockProcessor.getUrlsFromWebPage(anyString)).thenReturn(Success(Seq()))
-    Mockito.when(mockProcessor.getUrlsFromWebPage(eqTo("start1"))).thenReturn(Success(Seq("start1/sub1", "start1/sub2")))
-    Mockito.when(mockProcessor.getUrlsFromWebPage(eqTo("start1/sub1"))).thenReturn(Success(Seq("start1/sub1/subsub1", "start1/sub1/subsub2")))
-    Mockito.when(mockProcessor.getUrlsFromWebPage(eqTo("start1/sub2"))).thenReturn(Success(Seq("start1/sub2/subsub1", "start1/sub2/subsub2")))
-    Mockito.when(mockProcessor.getUrlsFromWebPage(eqTo("start2"))).thenReturn(Success(Seq("start2/sub1", "start2/sub2")))
-    Mockito.when(mockProcessor.getUrlsFromWebPage(eqTo("start2/sub1"))).thenReturn(Failure(urlRetrievalError))
-    Mockito.when(mockProcessor.getUrlsFromWebPage(eqTo("start2/sub2"))).thenReturn(Success(Seq("start2/sub2/subsub1", "start2/sub2/subsub2")))
+    Mockito.when(mockProcessor.getUrlsFromWebPage(anyString)).thenReturn(Seq())
+    Mockito.when(mockProcessor.getUrlsFromWebPage(eqTo("start1"))).thenReturn(Seq("start1/sub1", "start1/sub2"))
+    Mockito.when(mockProcessor.getUrlsFromWebPage(eqTo("start1/sub1"))).thenReturn(Seq("start1/sub1/subsub1", "start1/sub1/subsub2"))
+    Mockito.when(mockProcessor.getUrlsFromWebPage(eqTo("start1/sub2"))).thenReturn(Seq("start1/sub2/subsub1", "start1/sub2/subsub2"))
+    Mockito.when(mockProcessor.getUrlsFromWebPage(eqTo("start2"))).thenReturn(Seq("start2/sub1", "start2/sub2"))
+    Mockito.when(mockProcessor.getUrlsFromWebPage(eqTo("start2/sub1"))).thenThrow(urlRetrievalError)
+    Mockito.when(mockProcessor.getUrlsFromWebPage(eqTo("start2/sub2"))).thenReturn(Seq("start2/sub2/subsub1", "start2/sub2/subsub2"))
   }
 
   "Crawler" should "crawl to all url returned by url parser" in {

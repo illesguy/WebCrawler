@@ -4,15 +4,15 @@ import java.net.SocketTimeoutException
 
 import com.illesguy.webcrawler.errorhandler.ErrorHandler
 import com.illesguy.webcrawler.parser.UrlParser
+import org.jsoup.HttpStatusException
 import org.jsoup.nodes.Document
-import org.jsoup.{HttpStatusException, Jsoup}
 import org.mockito.Matchers.{any, anyString}
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import org.scalatest.{FlatSpec, Matchers}
 import org.scalatestplus.mockito.MockitoSugar
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 class JsoupPageProcessorTest extends FlatSpec with Matchers with MockitoSugar {
 
@@ -32,7 +32,7 @@ class JsoupPageProcessorTest extends FlatSpec with Matchers with MockitoSugar {
     val urlSocketTimeoutError = new SocketTimeoutException("Call to URL timed out")
     Mockito.when(mockDocumentRetriever.getDocumentFromUrl("error")).thenReturn(Failure(urlSocketTimeoutError))
 
-    val result = pageProcessor.getUrlsFromWebPage("error")
+    val result = Try(pageProcessor.getUrlsFromWebPage("error"))
 
     result should be (Failure(urlSocketTimeoutError))
     Mockito.verify(mockUrlParser, Mockito.never).getUrlsFromDocument(any(classOf[Document]))
@@ -48,7 +48,7 @@ class JsoupPageProcessorTest extends FlatSpec with Matchers with MockitoSugar {
 
     val result = pageProcessor.getUrlsFromWebPage("error")
 
-    result should be (Success(Seq("good")))
+    result should be (Seq("good"))
     Mockito.verify(mockUrlParser, Mockito.never).getUrlsFromDocument(any(classOf[Document]))
     Mockito.verify(mockDocumentRetriever, Mockito.times(1)).getDocumentFromUrl("error")
     Mockito.verify(mockErrorHandler, Mockito.times(1)).handleError(urlNotFoundError, "error")
@@ -61,7 +61,7 @@ class JsoupPageProcessorTest extends FlatSpec with Matchers with MockitoSugar {
       throw invocation.getArguments.head.asInstanceOf[Throwable]
     }
 
-    val result = pageProcessor.getUrlsFromWebPage("error")
+    val result = Try(pageProcessor.getUrlsFromWebPage("error"))
 
     result should be (Failure(runtimeError))
     Mockito.verify(mockUrlParser, Mockito.never).getUrlsFromDocument(any(classOf[Document]))
@@ -77,7 +77,7 @@ class JsoupPageProcessorTest extends FlatSpec with Matchers with MockitoSugar {
 
     val result = pageProcessor.getUrlsFromWebPage("good")
 
-    result should be (Success(Seq("good")))
+    result should be (Seq("good"))
     Mockito.verify(mockUrlParser, Mockito.times(1)).getUrlsFromDocument(document)
     Mockito.verify(mockDocumentRetriever, Mockito.never).getDocumentFromUrl(anyString)
     Mockito.verify(mockErrorHandler, Mockito.never).handleError(any(classOf[Throwable]), anyString)

@@ -8,8 +8,8 @@ import com.illesguy.webcrawler.parser.SubDomainUrlParser
 import com.illesguy.webcrawler.processor.JsoupPageProcessor
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext}
 
 object Main extends App {
   val logger = LoggerFactory.getLogger(getClass.getCanonicalName)
@@ -28,18 +28,10 @@ object Main extends App {
   logger.info(s"Starting crawling from $urlToCrawl with $retriesOnTimeout retries on timeout on $threadCount threads")
 
   val startTime = System.currentTimeMillis()
+  val urls = Await.result(crawler.crawlUrl(urlToCrawl), Duration.Inf)
+  val endTime = System.currentTimeMillis()
+  val executionTime = endTime - startTime
 
-  crawler.crawlUrl(urlToCrawl).onComplete {
-    case Success(urls) =>
-      val endTime = System.currentTimeMillis()
-
-      urls.foreach(println)
-
-      val executionTime = endTime - startTime
-      logger.info(s"Found ${urls.size} urls in $executionTime ms.")
-
-    case Failure(ex) =>
-      logger.error("Exception occurred while crawling through the pages ", ex)
-
-  }(execCtx)
+  urls.foreach(println)
+  logger.info(s"Found ${urls.size} urls in $executionTime ms.")
 }
