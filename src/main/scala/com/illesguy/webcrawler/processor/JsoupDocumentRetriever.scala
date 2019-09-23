@@ -1,4 +1,4 @@
-package com.illesguy.webcrawler.parser
+package com.illesguy.webcrawler.processor
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document

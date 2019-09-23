@@ -4,7 +4,8 @@ import java.util.concurrent.Executors
 
 import com.illesguy.webcrawler.crawler.Crawler
 import com.illesguy.webcrawler.errorhandler.IgnoringErrorHandler
-import com.illesguy.webcrawler.parser.{JsoupDocumentRetriever, SubDomainUrlParser}
+import com.illesguy.webcrawler.parser.SubDomainUrlParser
+import com.illesguy.webcrawler.processor.JsoupPageProcessor
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext
@@ -16,12 +17,13 @@ object Main extends App {
   val urlToCrawl = args.toSeq.headOption.getOrElse("https://monzo.com")
 
   val errorHandler = IgnoringErrorHandler
-  val parser = new SubDomainUrlParser(JsoupDocumentRetriever, errorHandler)
+  val parser = SubDomainUrlParser
   val retriesOnTimeout = 3
-  val threadCount = 6
+  val threadCount = 8
   val execCtx = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(threadCount))
+  val pageProcessor = new JsoupPageProcessor(retriesOnTimeout, parser, errorHandler)
 
-  val crawler = new Crawler(parser, retriesOnTimeout, execCtx)
+  val crawler = new Crawler(pageProcessor, execCtx)
 
   logger.info(s"Starting crawling from $urlToCrawl with $retriesOnTimeout retries on timeout on $threadCount threads")
 

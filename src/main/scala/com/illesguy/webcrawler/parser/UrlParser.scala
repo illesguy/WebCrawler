@@ -1,7 +1,7 @@
 package com.illesguy.webcrawler.parser
 
-import scala.util.Try
+import org.jsoup.nodes.Document
 
 trait UrlParser {
-  def getUrls(url: String, retryCount: Int): Try[Seq[String]]
+  def getUrlsFromDocument(document: Document): Seq[String]
 }

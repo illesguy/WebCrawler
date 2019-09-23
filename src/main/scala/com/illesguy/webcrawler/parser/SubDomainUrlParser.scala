@@ -1,41 +1,28 @@
 package com.illesguy.webcrawler.parser
 
-import java.net.SocketTimeoutException
-
-import com.illesguy.webcrawler.errorhandler.ErrorHandler
-import org.slf4j.LoggerFactory
+import org.jsoup.nodes.Document
 
 import scala.jdk.CollectionConverters._
-import scala.util.Try
 
 
-class SubDomainUrlParser(documentRetriever: JsoupDocumentRetriever, errorHandler: ErrorHandler) extends UrlParser {
+object SubDomainUrlParser extends UrlParser {
 
-  private val logger = LoggerFactory.getLogger(getClass.getCanonicalName)
-
-  override def getUrls(url: String, retryCount: Int): Try[Seq[String]] = documentRetriever.getDocumentFromUrl(url).map { doc =>
-    logger.debug(f"Processed $url")
-    lazy val elements = doc.select("a[href]").asScala.toSeq
+  override def getUrlsFromDocument(document: Document): Seq[String] = {
+    lazy val elements = document.select("a[href]").asScala.toSeq
     lazy val urls = elements.map(e => getCanonicalUrl(e.attr("abs:href")))
-    lazy val subDomainUrls = urls.filter(u => isSubDomain(url, u))
+    lazy val subDomainUrls = urls.filter(u => isSubDomain(document.baseUri, u))
     subDomainUrls.distinct
-  }.recover {
-    case ex =>
-      logger.warn(s"Error occurred, while processing $url, invoking error handler")
-      errorHandler.handleError(ex, url)
-  }.recoverWith {
-    case _: SocketTimeoutException if retryCount != 0 =>
-      logger.warn(f"Call to $url timed out, retrying")
-      getUrls(url, retryCount - 1)
   }
 
   private def getCanonicalUrl(url: String): String = {
-    if (url.contains("#"))
-      url.substring(0, url.indexOf('#'))
-    else if (url.endsWith("/"))
-      url.substring(0, url.length - 1)
-    else url
+    val specialCharacters = raw"[#\\?%]".r
+    val urlWithoutSpecialChars = specialCharacters.findFirstIn(url).map(c => url.substring(0, url.indexOf(c))).getOrElse(url)
+
+    if (urlWithoutSpecialChars.endsWith("/"))
+      urlWithoutSpecialChars.substring(0, urlWithoutSpecialChars.length - 1)
+    else urlWithoutSpecialChars
   }
 
-  private def isSubDomain(root: String, url: String): Boolean = url.startsWith(root) && url != root
+  private def isSubDomain(baseUrl: String, url: String): Boolean = url.startsWith(baseUrl) && url != baseUrl
+
 }
