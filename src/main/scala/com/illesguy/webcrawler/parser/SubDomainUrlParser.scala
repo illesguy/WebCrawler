@@ -7,6 +7,8 @@ import scala.jdk.CollectionConverters._
 
 object SubDomainUrlParser extends UrlParser {
 
+  private val specialCharacters = raw"[#\\?%]".r
+
   override def getUrlsFromDocument(document: Document): Seq[String] = {
     lazy val elements = document.select("a[href]").asScala.toSeq
     lazy val urls = elements.map(e => getCanonicalUrl(e.attr("abs:href")))
@@ -15,7 +17,6 @@ object SubDomainUrlParser extends UrlParser {
   }
 
   private def getCanonicalUrl(url: String): String = {
-    val specialCharacters = raw"[#\\?%]".r
     val urlWithoutSpecialChars = specialCharacters.findFirstIn(url).map(c => url.substring(0, url.indexOf(c))).getOrElse(url)
 
     if (urlWithoutSpecialChars.endsWith("/"))

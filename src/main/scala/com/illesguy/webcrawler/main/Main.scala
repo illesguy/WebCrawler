@@ -1,6 +1,6 @@
 package com.illesguy.webcrawler.main
 
-import java.util.concurrent.Executors
+import java.util.concurrent.ForkJoinPool
 
 import com.illesguy.webcrawler.crawler.Crawler
 import com.illesguy.webcrawler.errorhandler.IgnoringErrorHandler
@@ -8,8 +8,9 @@ import com.illesguy.webcrawler.parser.SubDomainUrlParser
 import com.illesguy.webcrawler.processor.JsoupPageProcessor
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
+import scala.util.{Failure, Success, Try}
 
 object Main extends App {
   val logger = LoggerFactory.getLogger(getClass.getCanonicalName)
@@ -19,19 +20,31 @@ object Main extends App {
   val errorHandler = IgnoringErrorHandler
   val parser = SubDomainUrlParser
   val retriesOnTimeout = 3
-  val threadCount = 8
-  val execCtx = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(threadCount))
+  val parallelism = 8
+  val execCtx = ExecutionContext.fromExecutor(new ForkJoinPool(parallelism))
   val pageProcessor = new JsoupPageProcessor(retriesOnTimeout, parser, errorHandler)
 
   val crawler = new Crawler(pageProcessor, execCtx)
 
-  logger.info(s"Starting crawling from $urlToCrawl with $retriesOnTimeout retries on timeout on $threadCount threads")
+  logger.info(s"Starting crawling from $urlToCrawl")
+
+  val threadsBefore = Thread.getAllStackTraces.keySet
 
   val startTime = System.currentTimeMillis()
-  val urls = Await.result(crawler.crawlUrl(urlToCrawl), Duration.Inf)
+  val crawlResult = Try(Await.result(crawler.crawlUrl(urlToCrawl), 5.minutes))
   val endTime = System.currentTimeMillis()
   val executionTime = endTime - startTime
 
-  urls.foreach(println)
-  logger.info(s"Found ${urls.size} urls in $executionTime ms.")
+  crawlResult match {
+    case Success(urls) =>
+      val siteMap = urls.map {
+        case (depth, url) => f"|${"-".repeat(depth)} $url"
+      }.mkString("\n")
+
+      logger.info(s"Site crawling done, site map:\n$siteMap")
+      logger.info(s"Found ${urls.size} urls in $executionTime ms.")
+
+    case Failure(ex) =>
+      logger.error("Error occurred while crawling through the websites!", ex)
+  }
 }

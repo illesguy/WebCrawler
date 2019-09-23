@@ -40,8 +40,8 @@ class CrawlerTest extends FlatSpec with Matchers with MockitoSugar {
   "Crawler" should "crawl to all url returned by url parser" in {
     resetMocks()
 
-    val expectedResult = Seq("start1", "start1/sub1", "start1/sub1/subsub1", "start1/sub1/subsub2",
-      "start1/sub2", "start1/sub2/subsub1", "start1/sub2/subsub2")
+    val expectedResult = Seq((0, "start1"), (1, "start1/sub1"), (2, "start1/sub1/subsub1"), (2, "start1/sub1/subsub2"),
+      (1, "start1/sub2"), (2, "start1/sub2/subsub1"), (2, "start1/sub2/subsub2"))
     val result = Await.result(crawler.crawlUrl("start1"), Duration.Inf)
 
     result should be (expectedResult)
