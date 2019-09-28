@@ -6,14 +6,17 @@ import com.illesguy.webcrawler.errorhandler.ErrorHandler
 import com.illesguy.webcrawler.parser.UrlParser
 import org.jsoup.HttpStatusException
 import org.jsoup.nodes.Document
+import org.junit.runner.RunWith
 import org.mockito.Matchers.{any, anyString}
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import org.scalatest.{FlatSpec, Matchers}
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.mockito.MockitoSugar
 
 import scala.util.{Failure, Success, Try}
 
+@RunWith(classOf[JUnitRunner])
 class JsoupPageProcessorTest extends FlatSpec with Matchers with MockitoSugar {
 
   val mockUrlParser = mock[UrlParser]
@@ -31,13 +34,16 @@ class JsoupPageProcessorTest extends FlatSpec with Matchers with MockitoSugar {
     resetMocks()
     val urlSocketTimeoutError = new SocketTimeoutException("Call to URL timed out")
     Mockito.when(mockDocumentRetriever.getDocumentFromUrl("error")).thenReturn(Failure(urlSocketTimeoutError))
+    Mockito.when(mockErrorHandler.handleError(any(classOf[Throwable]), anyString)).thenAnswer {invocation: InvocationOnMock =>
+      throw invocation.getArguments.head.asInstanceOf[Throwable]
+    }
 
     val result = Try(pageProcessor.getUrlsFromWebPage("error"))
 
     result should be (Failure(urlSocketTimeoutError))
     Mockito.verify(mockUrlParser, Mockito.never).getUrlsFromDocument(any(classOf[Document]))
     Mockito.verify(mockDocumentRetriever, Mockito.times(4)).getDocumentFromUrl("error")
-    Mockito.verify(mockErrorHandler, Mockito.times(4)).handleError(urlSocketTimeoutError, "error")
+    Mockito.verify(mockErrorHandler, Mockito.times(1)).handleError(urlSocketTimeoutError, "error")
   }
 
   it should "use the error handler to try and handle non timeout errors" in {
@@ -55,6 +61,7 @@ class JsoupPageProcessorTest extends FlatSpec with Matchers with MockitoSugar {
   }
 
   it should "return failure with the occurred error in it if it couldn't handle it with the error handler" in {
+    resetMocks()
     val runtimeError = new RuntimeException("something unexpected happened")
     Mockito.when(mockDocumentRetriever.getDocumentFromUrl("error")).thenReturn(Failure(runtimeError))
     Mockito.when(mockErrorHandler.handleError(any(classOf[Throwable]), anyString)).thenAnswer {invocation: InvocationOnMock =>
@@ -79,7 +86,7 @@ class JsoupPageProcessorTest extends FlatSpec with Matchers with MockitoSugar {
 
     result should be (Seq("good"))
     Mockito.verify(mockUrlParser, Mockito.times(1)).getUrlsFromDocument(document)
-    Mockito.verify(mockDocumentRetriever, Mockito.never).getDocumentFromUrl(anyString)
+    Mockito.verify(mockDocumentRetriever, Mockito.times(1)).getDocumentFromUrl(anyString)
     Mockito.verify(mockErrorHandler, Mockito.never).handleError(any(classOf[Throwable]), anyString)
   }
 }

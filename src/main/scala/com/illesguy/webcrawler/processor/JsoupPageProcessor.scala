@@ -18,7 +18,7 @@ class JsoupPageProcessor(retriesOnFailure: Int, urlParser: UrlParser, errorHandl
     case Success(doc) =>
       logger.debug(f"Parsing page for $url")
       urlParser.getUrlsFromDocument(doc)
-    case Failure(_: SocketTimeoutException) =>
+    case Failure(_: SocketTimeoutException) if retryCount > 0 =>
       logger.warn(f"Call to $url timed out, retrying")
       getUrlsWithRetry(url, retryCount - 1)
     case Failure(ex) =>
