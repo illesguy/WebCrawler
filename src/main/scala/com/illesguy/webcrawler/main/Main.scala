@@ -16,7 +16,7 @@ import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
 object Main extends App {
-  val urlToCrawl = args.toSeq.headOption.getOrElse("https://monzo.com")
+  val urlToCrawl = args.toSeq.headOption.getOrElse("https://www.google.com")
   val logger = LoggerFactory.getLogger(getClass.getCanonicalName)
 
   val properties: mutable.Map[String, String] = {
@@ -27,8 +27,8 @@ object Main extends App {
   }
 
   val retriesOnTimeout = properties.get("retriesOnTimeout").map(Integer.parseInt).getOrElse(3)
-  val parallelism = properties.get("parallelism").map(Integer.parseInt).getOrElse(8)
-  val crawlTimeoutSeconds = properties.get("crawlTimeoutSeconds").map(Integer.parseInt).getOrElse(120)
+  val parallelism = properties.get("parallelism").map(Integer.parseInt).getOrElse(64)
+  val crawlTimeoutSeconds = properties.get("crawlTimeoutSeconds").map(Integer.parseInt).getOrElse(300)
   val errorHandler = IgnoringErrorHandler
   val parser = SubDomainUrlParser
   val execCtx = ExecutionContext.fromExecutor(new ForkJoinPool(parallelism))
