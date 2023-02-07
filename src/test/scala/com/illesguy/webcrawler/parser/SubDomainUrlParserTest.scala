@@ -1,12 +1,9 @@
 package com.illesguy.webcrawler.parser
 
 import org.jsoup.Jsoup
-import org.junit.runner.RunWith
 import org.scalatest.{FlatSpec, Matchers}
-import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.mockito.MockitoSugar
 
-@RunWith(classOf[JUnitRunner])
 class SubDomainUrlParserTest extends FlatSpec with Matchers with MockitoSugar {
 
   val urlParser = SubDomainUrlParser

@@ -1,7 +1,7 @@
 language: scala
 
 script:
-  - gradle test
+  - sbt test
 
 jdk:
   - openjdk11

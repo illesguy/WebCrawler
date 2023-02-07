@@ -6,17 +6,14 @@ import com.illesguy.webcrawler.errorhandler.ErrorHandler
 import com.illesguy.webcrawler.parser.UrlParser
 import org.jsoup.HttpStatusException
 import org.jsoup.nodes.Document
-import org.junit.runner.RunWith
 import org.mockito.Matchers.{any, anyString}
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import org.scalatest.{FlatSpec, Matchers}
-import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.mockito.MockitoSugar
 
 import scala.util.{Failure, Success, Try}
 
-@RunWith(classOf[JUnitRunner])
 class JsoupPageProcessorTest extends FlatSpec with Matchers with MockitoSugar {
 
   val mockUrlParser = mock[UrlParser]

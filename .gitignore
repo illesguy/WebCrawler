@@ -2,5 +2,7 @@ gradle/
 gradlew*
 .gradle
 .idea
+.vs
 out
 build
+*target/
