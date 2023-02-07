@@ -1,14 +1,11 @@
 package com.illesguy.webcrawler.errorhandler
 
 import org.jsoup.{HttpStatusException, UnsupportedMimeTypeException}
-import org.junit.runner.RunWith
 import org.scalatest.{FlatSpec, Matchers}
-import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.mockito.MockitoSugar
 
 import scala.util.{Failure, Try}
 
-@RunWith(classOf[JUnitRunner])
 class IgnoringErrorHandlerTest extends FlatSpec with Matchers with MockitoSugar {
 
   "IgnoringErrorHandler" should "return empty list for http status error" in {

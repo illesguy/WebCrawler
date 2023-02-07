@@ -3,19 +3,15 @@ package com.illesguy.webcrawler.crawler
 import java.util.concurrent.Executors
 
 import com.illesguy.webcrawler.processor.PageProcessor
-import org.jsoup.HttpStatusException
-import org.junit.runner.RunWith
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito
 import org.scalatest.{FlatSpec, Matchers}
-import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.mockito.MockitoSugar
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext}
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Try}
 
-@RunWith(classOf[JUnitRunner])
 class CrawlerTest extends FlatSpec with Matchers with MockitoSugar {
 
   val mockProcessor = mock[PageProcessor]
